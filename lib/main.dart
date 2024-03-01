@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 
 void main() {
   runApp(MyApp());
@@ -37,9 +38,43 @@ class _InstagramReelsState extends State<InstagramReels> {
 
   // Page controller for managing the page index
   final PageController _pageController = PageController();
+    final PageController _pageControllerHorizontal = PageController();
+
 
   // Current page index
   int _currentPage = 0;
+  int _currentPageHorizontal = 0;
+
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(Duration(seconds: 10), (timer) {
+      if (_currentPageHorizontal < images.length - 1) {
+        _currentPageHorizontal++;
+        
+      } else {
+        _currentPageHorizontal = 0;
+      }
+      _pageControllerHorizontal.animateToPage(
+        _currentPageHorizontal,
+        duration: Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    });
+  
+  }
 
   void _handleDoubleTap() {
     setState(() {
@@ -69,9 +104,16 @@ class _InstagramReelsState extends State<InstagramReels> {
                   color: Colors.grey[300],
                   border: Border.all(color: Colors.grey),
                 ),
-                child: ListView.builder(
+                child: PageView.builder(
+                  controller: _pageControllerHorizontal,
                   scrollDirection: Axis.horizontal,
                   itemCount: images.length,
+                  onPageChanged: (value){
+                    setState(() {
+                      _currentPageHorizontal = value;
+                    });
+                  },
+                  
                   itemBuilder: (context, index) {
                     return Image.asset(
                       images[index],
@@ -266,7 +308,7 @@ class _InstagramReelsState extends State<InstagramReels> {
             ),
             Positioned(
               top: 37,
-              right: 160,
+              right: 100,
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: Row(
@@ -274,12 +316,12 @@ class _InstagramReelsState extends State<InstagramReels> {
                   children: List.generate(
                     images.length,
                     (index) => Container(
-                      width: 10,
-                      height: 10,
+                      width: 50,
+                      height: 3,
                       margin: EdgeInsets.symmetric(horizontal: 2),
                       decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _currentPage == index
+                        borderRadius: BorderRadius.circular(10),
+                        color: _currentPageHorizontal == index
                             ? Colors.white
                             : Colors.grey,
                       ),
