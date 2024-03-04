@@ -22,28 +22,28 @@ class InstagramReels extends StatefulWidget {
   _InstagramReelsState createState() => _InstagramReelsState();
 }
 
-class _InstagramReelsState extends State<InstagramReels> {
+class _InstagramReelsState extends State<InstagramReels>
+    with SingleTickerProviderStateMixin {
   final List<String> images = [
-    'assets/images/image2.jpg', // Replace with actual image URLs
+    'assets/images/image2.jpg',
     'assets/images/image1.jpg',
     'assets/images/image3.jpg',
   ];
 
-  // Initialize like counts for each image to 0
   List<int> likeCounts = List<int>.filled(3, 0);
 
   bool isHeartFilled = false;
   bool isHeartVisible = false;
   Offset heartPosition = Offset.zero;
 
-  // Page controller for managing the page index
   final PageController _pageController = PageController();
-    final PageController _pageControllerHorizontal = PageController();
+  final PageController _pageControllerHorizontal = PageController();
 
-
-  // Current page index
   int _currentPage = 0;
   int _currentPageHorizontal = 0;
+
+  late AnimationController _animationController;
+  late Animation<double> _animation;
 
   Timer? _timer;
 
@@ -51,30 +51,70 @@ class _InstagramReelsState extends State<InstagramReels> {
   void initState() {
     super.initState();
     _startTimer();
+
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _animationController.dispose();
     super.dispose();
   }
 
-  void _startTimer() {
-    _timer = Timer.periodic(Duration(seconds: 10), (timer) {
-      if (_currentPageHorizontal < images.length - 1) {
-        _currentPageHorizontal++;
-        
-      } else {
-        _currentPageHorizontal = 0;
-      }
+void _onPageChanged(int page) {
+  setState(() {
+    _currentPageHorizontal = page;
+  });
+
+  // Reset animation controller when scrolling up or down to the initial image
+  if (page == 0) {
+    _animationController.reset();
+    _animationController.forward();
+  }
+}
+
+void _startTimer() {
+  _animationController = AnimationController(
+    vsync: this,
+    duration: Duration(seconds: 10),
+  );
+
+  _animation = Tween<double>(
+    begin: 0,
+    end: 1.0,
+  ).animate(_animationController);
+
+  
+  _animationController.forward();
+
+  
+  _pageControllerHorizontal.addListener(() {
+    setState(() {
+      _currentPageHorizontal = _pageControllerHorizontal.page!.toInt();
+    });
+
+   
+    if (_pageControllerHorizontal.page!.toInt() == 0) {
+      _animationController.reset();
+      _animationController.forward();
+    }
+  });
+
+  _timer = Timer.periodic(Duration(seconds: 10), (timer) {
+    if (_currentPageHorizontal < images.length - 1) {
+      _currentPageHorizontal++;
+
       _pageControllerHorizontal.animateToPage(
         _currentPageHorizontal,
         duration: Duration(milliseconds: 500),
         curve: Curves.easeInOut,
       );
-    });
-  
-  }
+    } else {
+      _timer?.cancel();
+    }
+  });
+}
+
 
   void _handleDoubleTap() {
     setState(() {
@@ -89,6 +129,9 @@ class _InstagramReelsState extends State<InstagramReels> {
 
   @override
   Widget build(BuildContext context) {
+    final double progressBarWidth =
+        MediaQuery.of(context).size.width / images.length * 0.9;
+
     return PageView.builder(
       controller: _pageController,
       scrollDirection: Axis.vertical,
@@ -108,12 +151,11 @@ class _InstagramReelsState extends State<InstagramReels> {
                   controller: _pageControllerHorizontal,
                   scrollDirection: Axis.horizontal,
                   itemCount: images.length,
-                  onPageChanged: (value){
+                  onPageChanged: (value) {
                     setState(() {
                       _currentPageHorizontal = value;
                     });
                   },
-                  
                   itemBuilder: (context, index) {
                     return Image.asset(
                       images[index],
@@ -126,15 +168,15 @@ class _InstagramReelsState extends State<InstagramReels> {
             ),
             if (isHeartVisible)
               Positioned(
-                top: heartPosition.dy - 20, // Adjust position as needed
-                left: heartPosition.dx - 20, // Adjust position as needed
-                child: Icon(
+                top: heartPosition.dy - 20,
+                left: heartPosition.dx - 20,
+                child: const Icon(
                   Icons.favorite,
                   color: Colors.red,
                   size: 40,
                 ),
               ),
-            Positioned(
+            const Positioned(
               top: 35,
               left: 30,
               child: Row(
@@ -157,13 +199,11 @@ class _InstagramReelsState extends State<InstagramReels> {
               top: 20,
               right: 20,
               child: IconButton(
-                icon: Icon(
+                icon: const Icon(
                   Icons.camera_alt,
                   color: Colors.white,
                 ),
-                onPressed: () {
-                  // Add camera functionality
-                },
+                onPressed: () {},
               ),
             ),
             Positioned(
@@ -177,25 +217,26 @@ class _InstagramReelsState extends State<InstagramReels> {
                             color: const Color.fromARGB(174, 233, 30, 98),
                             width: 2),
                         borderRadius: BorderRadius.circular(50)),
-                    child: CircleAvatar(
-                      backgroundImage: NetworkImage(
-                          'https://via.placeholder.com/50'), // User profile image URL
+                    child: const CircleAvatar(
+                      backgroundImage:
+                          NetworkImage('https://via.placeholder.com/50'),
+                      // User profile image URL
                       radius: 15,
                     ),
                   ),
                   SizedBox(width: 8),
-                  Column(
+                  const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Username', // Replace with actual username
+                        'Username',
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        'Small description', // Replace with actual description
+                        'Small description',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -226,8 +267,9 @@ class _InstagramReelsState extends State<InstagramReels> {
                           height: 44,
                           child: isHeartFilled
                               ? Transform.scale(
-                                  scale: 1.4, // Adjust the scale factor as needed
-                                  child: Image.asset('assets/images/love.png'),
+                                  scale: 1.4,
+                                  child:
+                                      Image.asset('assets/images/love.png'),
                                 )
                               : Image.asset('assets/images/heart.png'),
                         ),
@@ -242,7 +284,7 @@ class _InstagramReelsState extends State<InstagramReels> {
                   ),
                   Text(
                     '${likeCounts[index]}',
-                    style: TextStyle(
+                    style: const TextStyle(
                         color: Colors.white, fontWeight: FontWeight.w800),
                   ),
                   SizedBox(height: 10),
@@ -250,7 +292,7 @@ class _InstagramReelsState extends State<InstagramReels> {
                     width: 44,
                     height: 44,
                     child: ColorFiltered(
-                      colorFilter: ColorFilter.mode(
+                      colorFilter: const ColorFilter.mode(
                         Colors.white,
                         BlendMode.srcATop,
                       ),
@@ -259,18 +301,18 @@ class _InstagramReelsState extends State<InstagramReels> {
                           'assets/images/chat.png',
                           color: Colors.white,
                         ),
-                        onPressed: () {
-                          // Add camera functionality
-                        },
+                        onPressed: () {},
                       ),
                     ),
                   ),
-                  SizedBox(height: 10,),
+                  SizedBox(
+                    height: 10,
+                  ),
                   SizedBox(
                     width: 44,
                     height: 44,
                     child: ColorFiltered(
-                      colorFilter: ColorFilter.mode(
+                      colorFilter: const ColorFilter.mode(
                         Colors.white,
                         BlendMode.srcATop,
                       ),
@@ -279,15 +321,13 @@ class _InstagramReelsState extends State<InstagramReels> {
                           'assets/images/send.png',
                           color: Colors.white,
                         ),
-                        onPressed: () {
-                          // Add camera functionality
-                        },
+                        onPressed: () {},
                       ),
                     ),
                   ),
                   IconButton(
                     icon: ColorFiltered(
-                      colorFilter: ColorFilter.mode(
+                      colorFilter: const ColorFilter.mode(
                         Colors.white,
                         BlendMode.srcATop,
                       ),
@@ -299,45 +339,63 @@ class _InstagramReelsState extends State<InstagramReels> {
                     ),
                     color: Colors.white,
                     iconSize: 36,
-                    onPressed: () {
-                      // Add functionality
-                    },
+                    onPressed: () {},
                   ),
                 ],
               ),
             ),
             Positioned(
-              top: 37,
-              right: 100,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    images.length,
-                    (index) => Container(
-                      width: 50,
-                      height: 3,
-                      margin: EdgeInsets.symmetric(horizontal: 2),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: _currentPageHorizontal == index
-                            ? Colors.white
-                            : Colors.grey,
-                      ),
-                    ),
-                  ),
+  top: 60,
+  left: 4,
+  child: Container(
+    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(
+        images.length,
+        (index) => Container(
+          width: progressBarWidth,
+          height: 5,
+          margin: EdgeInsets.symmetric(horizontal: 2),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            color: index < _currentPageHorizontal ? Colors.white : _currentPageHorizontal == index
+                ? Colors.grey
+                : Colors.grey,
+          ),
+          child: AnimatedBuilder(
+            animation: _animationController,
+            builder: (context, child) {
+              return LinearProgressIndicator(
+                value: (_currentPageHorizontal == index)
+                    ? _animationController.value
+                    : 0.0,
+                backgroundColor: Colors.transparent,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Colors.white,
                 ),
-              ),
-            ),
+              );
+            },
+          ),
+        ),
+      ),
+    ),
+  ),
+),
+
           ],
         );
       },
-      onPageChanged: (int page) {
-        setState(() {
-          _currentPage = page;
-        });
-      },
+     onPageChanged: (int page) {
+  setState(() {
+    _currentPage = page;
+    
+    _animationController.reset();
+    _animationController.forward();
+  });
+},
+
     );
   }
+  
 }
