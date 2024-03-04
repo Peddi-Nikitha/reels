@@ -469,7 +469,7 @@ class _InstagramReelsState extends State<InstagramReels>
       _currentPageHorizontal = page;
     });
 
-    // Reset animation controller when scrolling up or down to the initial image
+    
     if (page == 0) {
       _animationController.reset();
       _animationController.forward();
@@ -556,7 +556,7 @@ class _InstagramReelsState extends State<InstagramReels>
             );
           }
         } else {
-          // Tap on the left side, move to the previous image
+         
           if (_currentPageHorizontal > 0) {
             _currentPageHorizontal--;
             _pageControllerHorizontal.animateToPage(
